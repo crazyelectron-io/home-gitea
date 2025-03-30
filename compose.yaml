@@ -1,0 +1,88 @@
+---
+services:
+
+  # --- Gitea - Git with a cup of tea
+  gitea:
+    image: docker.gitea.com/gitea:1.23.5-rootless
+    container_name: gitea
+    hostname: gitea
+    env_file: .env
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - ENABLE_AUTO_REGISTRATION=true
+      - GITEA__database__HOST=postgresdb:5432
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__DB_HOST=postgresdb:5432
+      - GITEA__database__DB_NAME=gitea
+      - GITEA__database__DB_USER=${GITEA_DATABASE_USER}
+      - GITEA__database__DB_PASSWD=${GITEA_DATABASE_PASSWORD}
+      - GITEA__database__LOG_SQL=false
+      - GITEA__database__SCHEMA=""
+      - GITEA__database__SSL_MODE=disable
+      # - ROOT_URL=https://${GITEA_DOMAIN}
+    volumes:
+      - /mnt/data/appdata/gitea/data:/var/lib/gitea:rw
+      - /mnt/data/appdata/gitea/config:/etc/gitea
+      - /mnt/data/appdata/gitea/backup:/backup
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - backend
+      - frontend
+    restart: unless-stopped
+    ports:
+      - "5000:3000"
+      - "2222:2222"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+    # depends_on:
+    #   - pginit-gitea
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitea.entrypoints=http"
+      - "traefik.http.routers.gitea.rule=Host(`${GITEA_DOMAIN}`)"
+      - "traefik.http.middlewares.gitea-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.gitea.middlewares=gitea-https-redirect"
+      - "traefik.http.routers.gitea-secure.entrypoints=https"
+      - "traefik.http.routers.gitea-secure.rule=Host(`${GITEA_DOMAIN}`)"
+      - "traefik.http.routers.gitea-secure.tls=true"
+      - "traefik.http.routers.gitea.service=gitea"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+      - "traefik.docker.network=frontend"
+
+  # --- pginit-gitea - PostgreSQL initialization for Gitea
+  pginit-gitea:
+    image: docker.io/library/postgres:16
+    container_name: pginit-gitea
+    hostname: pginit-gitea
+    env_file: .env
+    restart: "no"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - GITEA_DATABASE_NAME=${GITEA_DATABASE_NAME}
+      - GITEA_DATABASE_USER=${GITEA_DATABASE_USER}
+      - GITEA_DATABASE_PASSWORD=${GITEA_DATABASE_PASSWORD}
+    command:
+      - bash
+      - -c
+      - |
+        PGPASSWORD=${POSTGRES_PASSWORD} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} --host postgresdb -c "CREATE USER ${GITEA_DATABASE_USER} WITH PASSWORD '${GITEA_DATABASE_PASSWORD}';"
+        PGPASSWORD=${POSTGRES_PASSWORD} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} --host postgresdb -c "CREATE DATABASE gitea OWNER ${GITEA_DATABASE_USER};"
+        PGPASSWORD=${POSTGRES_PASSWORD} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} --host postgresdb -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${GITEA_DATABASE_USER};"
+    networks:
+      - backend
+
+# --- Docker networks ---
+networks:
+  backend:
+    external: true
+  frontend:
+    external: true
