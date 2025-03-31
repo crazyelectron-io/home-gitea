@@ -44,6 +44,8 @@ services:
     # depends_on:
     #   - pginit-gitea
     labels:
+      - "alloy.logs.enable=true"
+      - "alloy.metrics.enable=true"
       - "traefik.enable=true"
       - "traefik.http.routers.gitea.entrypoints=http"
       - "traefik.http.routers.gitea.rule=Host(`${GITEA_DOMAIN}`)"
