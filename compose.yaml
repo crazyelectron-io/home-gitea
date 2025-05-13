@@ -92,7 +92,9 @@ services:
     restart: unless-stopped
     env_file: .env
     depends_on:
-      - gitea
+      gitea:
+        condition: service_healthy
+        restart: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /mnt/data/appdata/gitea/runner/config.yaml:/config.yaml:rw
@@ -101,7 +103,7 @@ services:
     environment:
       - TZ=Europe/Amsterdam
       - CONFIG_FILE=/config.yaml
-      - GITEA_INSTANCE_URL=gitea:3000
+      - GITEA_INSTANCE_URL=http://gitea:3000
       - GITEA_RUNNER_REGISTRATION_TOKEN=${GITEA_RUNNER_TOKEN}
       - GITEA_RUNNER_NAME=gitea-runner
       - GITEA_RUNNER_MAX_CONCURRENT=1
