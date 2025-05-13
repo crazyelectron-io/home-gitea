@@ -94,9 +94,10 @@ services:
     depends_on:
       - gitea
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /mnt/data/appdata/gitea/runner/config.yaml:/config.yaml:rw
-      - /mnt/data/appdata/gitea/runner/data:/data
+      - /mnt/data/appdata/gitea/runner/data:/data:rw
+      - /mnt/data/appdata/gitea/runner/logs:/tmp/logs:rw
     environment:
       - TZ=Europe/Amsterdam
       - CONFIG_FILE=/config.yaml
