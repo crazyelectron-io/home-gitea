@@ -82,6 +82,31 @@ services:
     networks:
       - backend
 
+# --- Gitea actions runner ---
+    volumes:
+      - /mnt/data/appdata/gitea-runner/logs:/tmp/logs:rw
+
+  gitea-runner:
+    image: gitea/act_runner:latest
+    container_name: gitea_runner
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - gitea
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/data/appdata/gitea/runner/config.yaml:/config.yaml:rw
+      - /mnt/data/appdata/gitea/runner/data:/data
+    environment:
+      - TZ=Europe/Amsterdam
+      - CONFIG_FILE=/config.yaml
+      - GITEA_INSTANCE_URL=gitea:3000
+      - GITEA_RUNNER_REGISTRATION_TOKEN=${GITEA_RUNNER_TOKEN}
+      - GITEA_RUNNER_NAME=gitea-runner
+      - GITEA_RUNNER_MAX_CONCURRENT=1
+    networks:
+      - backend
+
 # --- Docker networks ---
 networks:
   backend:
