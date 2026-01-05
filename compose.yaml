@@ -82,7 +82,7 @@ services:
     networks:
       - backend
     volumes:
-      - /opt/appdata/gitea-runner/logs:/tmp/logs:rw
+      - /opt/appdata/gitea/runner/logs:/tmp/logs:rw
 
   # --- Gitea actions runner ---
   gitea-runner:
