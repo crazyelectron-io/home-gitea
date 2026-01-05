@@ -22,9 +22,9 @@ services:
       - GITEA__database__SSL_MODE=disable
       # - ROOT_URL=https://${GITEA_DOMAIN}
     volumes:
-      - /mnt/data/appdata/gitea/data:/var/lib/gitea:rw
-      - /mnt/data/appdata/gitea/config:/etc/gitea
-      - /mnt/data/appdata/gitea/backup:/backup
+      - /opt/appdata/gitea/data:/var/lib/gitea:rw
+      - /opt/appdata/gitea/config:/etc/gitea
+      - /opt/appdata/gitea/backup:/backup
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
@@ -81,11 +81,10 @@ services:
         PGPASSWORD=${POSTGRES_PASSWORD} psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} --host postgresdb -c "GRANT ALL PRIVILEGES ON SCHEMA public TO ${GITEA_DATABASE_USER};"
     networks:
       - backend
-
-# --- Gitea actions runner ---
     volumes:
-      - /mnt/data/appdata/gitea-runner/logs:/tmp/logs:rw
+      - /opt/appdata/gitea-runner/logs:/tmp/logs:rw
 
+  # --- Gitea actions runner ---
   gitea-runner:
     image: gitea/act_runner:latest
     container_name: gitea_runner
@@ -97,9 +96,9 @@ services:
         restart: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /mnt/data/appdata/gitea/runner/config.yaml:/config.yaml:rw
-      - /mnt/data/appdata/gitea/runner/data:/data:rw
-      - /mnt/data/appdata/gitea/runner/logs:/tmp/logs:rw
+      - /opt/appdata/gitea/runner/config.yaml:/config.yaml:rw
+      - /opt/appdata/gitea/runner/data:/data:rw
+      - /opt/appdata/gitea/runner/logs:/tmp/logs:rw
     environment:
       - TZ=Europe/Amsterdam
       - CONFIG_FILE=/config.yaml
